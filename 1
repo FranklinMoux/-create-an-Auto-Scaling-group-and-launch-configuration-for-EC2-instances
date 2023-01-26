@@ -1,0 +1,38 @@
+# create an Auto Scaling group and launch configuration for EC2 instances
+import boto3
+
+# Create an EC2 client
+ec2 = boto3.client('ec2')
+
+# Define the launch configuration parameters
+launch_config_params = {
+    'ImageId': 'ami-01234567890abcdef0',
+    'InstanceType': 't2.micro',
+    'KeyName': 'your_key_pair',
+    'SecurityGroups': ['your_security_group'],
+    'UserData': 'your_user_data'
+}
+
+# Create the launch configuration
+response = ec2.create_launch_configuration(**launch_config_params)
+
+# Define the Auto Scaling group parameters
+asg_params = {
+    'AutoScalingGroupName': 'your_asg_name',
+    'LaunchConfigurationName': response['LaunchConfigurationName'],
+    'MinSize': 1,
+    'MaxSize': 5,
+    'DesiredCapacity': 2,
+    'VPCZoneIdentifier': ['subnet-01234567890abcdef0','subnet-01234567890abcdef1']
+}
+
+# Create the Auto Scaling group
+response = ec2.create_auto_scaling_group(**asg_params)
+
+# create scheduled actions to schedule scaling events in advance, and also create alarms to trigger scaling events based on CloudWatch metrics
+#Create scheduled scaling action
+response = ec2.put_scheduled_update_group_action(AutoScalingGroupName='your_asg_name', ScheduledActionName='your_scheduled_action_name', MinSize=2, MaxSize=4, DesiredCapacity=3)
+
+#create alarm for scaling action
+response = cloudwatch.put_metric_alarm(AlarmName='your_alarm_name', MetricName='CPUUtilization', ComparisonOperator='GreaterThanThreshold', EvaluationPeriods=1, Threshold=80, AlarmActions=[scaling_action_arn])
+
